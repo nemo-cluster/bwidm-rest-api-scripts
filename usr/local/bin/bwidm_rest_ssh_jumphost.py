@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 """Get all SSH keys from an bwIDM user matching a pre-defined pefix."""
 
 import argparse
@@ -123,7 +123,6 @@ http_code = response.status_code
 if http_code == 200:
     ssh_keys = json.loads(response.text)
     for key in ssh_keys:
-        # For active keys remove "re.match"
         if re.search(SSH_KEY_NAME, key["name"]):
             print(key["keyType"], key["encodedKey"], ssh_user)
     sys.exit(0)
