@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Get all SSH keys from an bwIDM user matching a pre-defined pefix."""
+"""
+Get all SSH keys from an bwIDM user matching a pre-defined SSH key name pefix.
+All keys are used even if they are no longer valid in bwIDM.
+SSH validity days can be freely defined.
+"""
 
 import argparse
 import configparser
@@ -12,7 +16,7 @@ from datetime import datetime, timedelta
 import requests
 
 # Config file location
-CONFIG_FILE = "/usr/local/etc/bwidm-rest-ssh.conf"
+CONFIG_FILE = "/usr/local/etc/bwidm_rest_ssh.conf"
 SSH_KEY_NAME = "UNIFR-JUMPHOST"
 SSH_VALID_DAYS = 365
 
@@ -24,14 +28,13 @@ def exit_with_msg(exit_code, *messages):
     sys.exit(exit_code)
 
 
-def check_user_name(ssh_user):
+def check_user_name(ssh_usr):
     """Function checks if username is valid."""
-    if not re.fullmatch(r"\w{1,12}", ssh_user):
-        exit_with_msg(41, f"Not a valid user name: {ssh_user}")
-    return ssh_user
+    if not re.fullmatch(r"\w{1,12}", ssh_usr):
+        exit_with_msg(41, f"Not a valid user name: {ssh_usr}")
+    return ssh_usr
 
 
-# Get UserID from UserName, returns UserID
 def get_user_id(rest_u, rest_p, max_t, reg_h, sn, ssh_u):
     """Function takes username and returns user info."""
     try:
@@ -53,11 +56,11 @@ def get_user_id(rest_u, rest_p, max_t, reg_h, sn, ssh_u):
     return None
 
 
-def ssh_key_valid(ssh_key_date, ssh_valid_days):
+def ssh_key_valid(ssh_k_date, ssh_valid_days):
     """Function takes SSH key date and checks if it is less than SSH_VALID_DAYS old."""
     try:
         # Parse the given date
-        original_date = datetime.strptime(ssh_key_date, "%Y-%m-%dT%H:%M:%S.%fZ[UTC]")
+        original_date = datetime.strptime(ssh_k_date, "%Y-%m-%dT%H:%M:%S.%fZ[UTC]")
         # Add the specified number of years
         new_date = original_date + timedelta(days=ssh_valid_days)
         # Get the current date and time
@@ -154,17 +157,5 @@ if http_code == 200:
             if ssh_key_valid(ssh_key_date, SSH_VALID_DAYS):
                 print(key["keyType"], key["encodedKey"], ssh_user)
     sys.exit(0)
-elif http_code == 401:
-    exit_with_msg(41, "Login Failed (Access denied)")
-elif http_code == 402:
-    exit_with_msg(42, "Service ID not valid (Access denied)")
-elif http_code == 403:
-    exit_with_msg(43, "No assertion resulted from the AttributeQuery (Access denied)")
-elif http_code == 404:
-    exit_with_msg(44, "User is not registered (Access denied)")
-elif http_code == 500:
-    exit_with_msg(50, "Misconfigured service (Access denied)")
-else:
-    exit_with_msg(
-        19, f"Access was not granted (Access denied). HTTP status code is {http_code}."
-    )
+elif http_code != 200:
+    exit_with_msg(12, f"Access denied ({http_code})")
