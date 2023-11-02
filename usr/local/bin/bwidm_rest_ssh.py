@@ -66,8 +66,10 @@ def get_fido2_public_key(fido2_pk):
 
 
 def decode_fido2_public_key(fido2_pub_key):
-    """Decode submitted public key and check
-    if key has string 'sk-ssh-ed25519@openssh.com'"""
+    """
+    Decode submitted public key and check
+    if key has string 'sk-ssh-ed25519@openssh.com'
+    """
     # First get base64 encoded key part [0] and comment [1]
     fido2_key = get_fido2_public_key(fido2_pub_key)
     if fido2_key:
